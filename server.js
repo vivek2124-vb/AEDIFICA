@@ -25,29 +25,30 @@ connectDB();
 const app = express();
 
 // ================= MIDDLEWARE =================
-
-// ✅ CORS
+// ✅ FIXED CORS (this was the main blocker)
 app.use(
   cors({
-    origin: "https://aedifica-frontend.vercel.app/",
+    origin: [
+      "https://aedifica-frontend.vercel.app",   // ← no trailing slash
+      "http://localhost:3000",                  // ← for local development
+    ],
     credentials: true,
-  }),
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
 
 // ✅ Body parser
 app.use(express.json());
-
 // ✅ Cookie parser
 app.use(cookieParser());
-
-// 🔥 ✅ VERY IMPORTANT (ADD THIS)
+// 🔥 Serve uploaded files
 app.use("/uploads", express.static("uploads"));
 
 // ================= ROUTES =================
-
 // ✅ Root Route
 app.get("/", (req, res) => {
-  res.send("Aedifica API Running ");
+  res.send("Aedifica API Running 🚀");
 });
 
 // ✅ API Routes
@@ -64,4 +65,6 @@ app.use(errorHandler);
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {});
+app.listen(PORT, () => {
+  console.log(`✅ Server is running on port ${PORT}`);
+});
