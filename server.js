@@ -29,7 +29,7 @@ const app = express();
 // ✅ CORS
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://aedifica-frontend.vercel.app/",
     credentials: true,
   }),
 );
