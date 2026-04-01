@@ -29,7 +29,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://aedifica-frontend.vercel.app",   // ← no trailing slash
+      https://aedifica-frontend-git-main-vivek2124-vbs-projects.vercel.app/,   // ← no trailing slash
       "http://localhost:3000",                  // ← for local development
     ],
     credentials: true,
