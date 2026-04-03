@@ -30,9 +30,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
-      "https://aedifica-frontend-git-main-vivek2124-vbs-projects.vercel.app",
-      "https://aedifica.onrender.com"
+     "https://aedifica.in
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
