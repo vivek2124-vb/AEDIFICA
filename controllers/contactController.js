@@ -36,30 +36,12 @@ export const createContact = async (req, res, next) => {
 
     emailRequestMap.set(email, now);
 
-    // ================= SAVE TO DATABASE =================
+    // ================= SAVE TO DATABASE FIRST =================
     const newContact = await Contact.create({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       message: message.trim(),
     });
-
-    // ================= SEND EMAIL =================
-    try {
-      await sendEmail({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        message: message.trim(),
-      });
-    } catch (emailError) {
-      console.error("❌ Email sending failed:", emailError);
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Message saved but email could not be sent. Please check mail configuration.",
-        error: emailError.message,
-      });
-    }
 
     // ================= COOKIE =================
     res.cookie("aedifica_user", email.trim().toLowerCase(), {
@@ -69,11 +51,21 @@ export const createContact = async (req, res, next) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    // ================= SUCCESS RESPONSE =================
-    return res.status(201).json({
+    // ================= SEND RESPONSE IMMEDIATELY =================
+    res.status(201).json({
       success: true,
       message: "Message sent successfully!",
       data: newContact,
+    });
+
+    // ================= SEND EMAIL IN BACKGROUND =================
+    sendEmail({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      message: message.trim(),
+    }).catch((err) => {
+      console.error("❌ Background email failed:", err.message);
+      console.error(err);
     });
   } catch (error) {
     console.error("❌ Contact controller error:", error);
