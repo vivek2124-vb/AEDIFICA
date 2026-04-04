@@ -1,7 +1,6 @@
 import Contact from "../models/Contact.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
-// ✅ Spam control (API level)
 const emailRequestMap = new Map();
 
 export const createContact = async (req, res, next) => {
@@ -43,22 +42,27 @@ export const createContact = async (req, res, next) => {
       message,
     });
 
-    // ================= SEND EMAIL =================
-    await sendEmail({ name, email, message });
-
     // ================= COOKIE =================
     res.cookie("aedifica_user", email, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
 
-    // ================= RESPONSE =================
+    // ================= RESPONSE FIRST =================
     res.status(201).json({
       success: true,
       message: "Message sent successfully",
       data: newContact,
     });
+
+    // ================= SEND EMAIL AFTER RESPONSE =================
+    sendEmail({ name, email, message }).catch((emailError) => {
+      console.error("Email sending failed:", emailError);
+    });
   } catch (error) {
+    console.error("Create contact error:", error);
     next(error);
   }
 };
