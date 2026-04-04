@@ -8,19 +8,19 @@ const contactSchema = new mongoose.Schema(
       trim: true,
       minlength: [2, "Name must be at least 2 characters"],
     },
-
     email: {
       type: String,
       required: [true, "Email is required"],
       match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
+      lowercase: true,
+      trim: true,
     },
-
     message: {
       type: String,
       required: [true, "Message is required"],
       minlength: [10, "Message must be at least 10 characters"],
+      trim: true,
     },
-
     status: {
       type: String,
       enum: ["new", "read", "replied"],
@@ -29,7 +29,7 @@ const contactSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 export default mongoose.model("Contact", contactSchema);
