@@ -16,7 +16,7 @@ export const createContact = async (req, res, next) => {
       });
     }
 
-    if (message.length < 10) {
+    if (message.trim().length < 10) {
       return res.status(400).json({
         success: false,
         message: "Message must be at least 10 characters",
@@ -26,43 +26,57 @@ export const createContact = async (req, res, next) => {
     // ================= SPAM PROTECTION =================
     const now = Date.now();
     const lastRequest = emailRequestMap.get(email);
+
     if (lastRequest && now - lastRequest < 60000) {
       return res.status(429).json({
         success: false,
         message: "Too many requests. Please wait 1 minute.",
       });
     }
+
     emailRequestMap.set(email, now);
 
-    // ================= SAVE TO DATABASE FIRST =================
+    // ================= SAVE TO DATABASE =================
     const newContact = await Contact.create({
-      name,
-      email,
-      message,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      message: message.trim(),
     });
 
-    // ================= SEND EMAIL IN BACKGROUND (NO TIMEOUT) =================
-    // We respond to user immediately, then send email asynchronously
-    sendEmail({ name, email, message }).catch((err) => {
-      console.error("❌ Background email failed:", err);
-      // Don't crash the route
-    });
+    // ================= SEND EMAIL =================
+    try {
+      await sendEmail({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        message: message.trim(),
+      });
+    } catch (emailError) {
+      console.error("❌ Email sending failed:", emailError);
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Message saved but email could not be sent. Please check mail configuration.",
+        error: emailError.message,
+      });
+    }
 
     // ================= COOKIE =================
-    res.cookie("aedifica_user", email, {
+    res.cookie("aedifica_user", email.trim().toLowerCase(), {
       httpOnly: true,
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    // ================= INSTANT SUCCESS RESPONSE =================
-    res.status(201).json({
+    // ================= SUCCESS RESPONSE =================
+    return res.status(201).json({
       success: true,
       message: "Message sent successfully!",
       data: newContact,
     });
-
   } catch (error) {
-    console.error("Contact controller error:", error);
+    console.error("❌ Contact controller error:", error);
     next(error);
   }
 };
