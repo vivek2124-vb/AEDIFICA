@@ -3,7 +3,6 @@ import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 
 // Routes
 import jobRoutes from "./routes/jobRoutes.js";
@@ -16,45 +15,55 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 // Middleware
 import { errorHandler } from "./middlewares/errorHandler.js";
 
-dotenv.config();
-
 // ✅ Connect DB
 connectDB();
 
-// ✅ CREATE APP FIRST
+// ✅ App
 const app = express();
 
-// ================= MIDDLEWARE =================
+// ================= CORS =================
+const allowedOrigins = [
+  "https://aedifica.in",
+  "https://www.aedifica.in",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-// ✅ CORS (Updated for Vercel + Local)
 app.use(
   cors({
-    origin: [
-     "https://aedifica.in"
-    ],
+    origin: function (origin, callback) {
+      // Postman / mobile apps / server-to-server ke liye
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// ✅ Body parser
+// ================= BODY PARSER =================
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ✅ Cookie parser
+// ================= COOKIE =================
 app.use(cookieParser());
 
-// 🔥 ✅ VERY IMPORTANT
+// ================= STATIC =================
 app.use("/uploads", express.static("uploads"));
 
-// ================= ROUTES =================
-
-// ✅ Root Route
+// ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("Aedifica API Running ");
+  res.send("Aedifica API Running");
 });
 
-// ✅ API Routes
+// ================= ROUTES =================
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/contact", contactRoutes);
